@@ -1,0 +1,34 @@
+{% load thumbnail %}
+<div class="card">
+  <h5 class="card-header">
+    {% if not group_list %}
+      {% if post.group %} 
+        <a href="{% url 'posts:group_list' post.group.slug %}" class="blog-post-meta link-dark">
+          {{ post.group.title }} 
+        </a> |
+      {% endif %}
+    {% endif %}
+      Автор: 
+    <a {% if not profile %}href="{% url 'posts:profile' post.author.username %}{% endif %}" class="blog-post-meta link-dark">
+      {{ post.author.get_full_name }}
+    </a>
+  </h5>
+  <div class="card-body">
+    <h6 class="card-subtitle">
+      {{ post.pub_date|date:"d E Y h:m" }}
+    </h6>
+    {% thumbnail post.image "960x400" crop="center" upscale=True as im %}
+      <img class="card-img my-2" src="{{ im.url }}">
+    {% endthumbnail %}
+    {{ post.text|linebreaks }}
+    {% if post_detail %}
+      {% if user == post.author %} 
+        <a type="button" href="{% url 'posts:post_edit' post.id %}" class="btn btn-secondary btn-sm">
+          Редактировать
+        </a>
+      {% endif %}
+    {% else %}
+      <a type="button" href="{% url 'posts:post_detail' post.id %}" class="btn btn-secondary btn-sm">Открыть</a>
+    {% endif %}
+  </div>
+</div>

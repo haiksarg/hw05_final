@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Custom {{ code }}{% endblock %}
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-md-6 p-5">
+      <h1>Custom {{ code }}</h1>
+      {% if path %}
+        <p>Странички с адресом {{ path }} не существует :[</p>
+      {% endif %}
+      <a class="btn btn-secondary" href="{% url 'posts:index' %}">Пошли в начало</a>
+    </div>
+  </div>
+{% endblock %}

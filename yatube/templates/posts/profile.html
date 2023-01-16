@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}
+  Все посты автора
+{% endblock %}
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <aside class="col-12 col-md-3">
+        <div class="card" style="">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item"><h5>{{ author.get_full_name }}</h5></li>
+            <li class="list-group-item"><h6>постов {{ author.posts.all.count }}</h6></li>
+            <li class="list-group-item">
+              <h6>подписок {{ followings }}</h6>
+              <h6>подписчиков {{ followers }}</h6>
+            </li>
+          </ul>
+        </div>
+        <br>
+        {% if not user == author %}
+          {% if following %}
+            <a
+              class="btn btn-lg btn-secondary"
+              href="{% url 'posts:profile_unfollow' author.username %}" role="button"
+            >
+              Отписаться
+            </a>
+          {% else %}
+            <a
+              class="btn btn-lg btn-secondary"
+              href="{% url 'posts:profile_follow' author.username %}" role="button"
+            >
+              Подписаться
+            </a>
+          {% endif %}
+        {% endif %}
+      </aside>
+      <article class="col-12 col-md-7">
+        {% for post in page_obj %}
+          {% include 'posts/includes/post.html' with profile=True %}
+          {% if not forloop.last %}<hr>{% endif %}
+        {% endfor %}
+      </article>
+    </div>
+  </div>
+  {% include 'posts/includes/paginator.html' %}
+{% endblock %} 
+  
