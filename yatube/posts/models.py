@@ -1,29 +1,14 @@
-from django.contrib.auth import get_user_model
-from django.conf import settings
 from django.db import models
 
-from core.models import CreatedModel
-
-User = get_user_model()
+from core.models import CreatedModel, User
 
 
 class Post(CreatedModel):
-    text = models.TextField(
-        'текст_поста',
-        help_text='Введите текст поста',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='posts',
-        verbose_name='автор',
-    )
     group = models.ForeignKey(
         'Group',
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-        related_name='posts',
         verbose_name='группа',
         help_text='Группа, к которой будет относиться пост',
     )
@@ -33,12 +18,9 @@ class Post(CreatedModel):
         blank=True
     )
 
-    class Meta:
-        ordering = ('-pub_date',)
+    class Meta(CreatedModel.Meta):
         verbose_name_plural = 'посты'
-
-    def __str__(self):
-        return self.text[:settings.STR_LIMIT]
+        default_related_name = 'posts'
 
 
 class Group(models.Model):
@@ -65,30 +47,16 @@ class Group(models.Model):
         return self.title
 
 
-class Comment(models.Model):
+class Comment(CreatedModel):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='пост',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='автор',
-    )
-    text = models.TextField(
-        'текст_поста',
-        help_text='Текст нового комментария',
-    )
-    created = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True
+        verbose_name='пост'
     )
 
-    class Meta:
+    class Meta(CreatedModel.Meta):
         verbose_name_plural = 'коментарии'
+        default_related_name = 'comments'
 
 
 class Follow(models.Model):
@@ -107,3 +75,15 @@ class Follow(models.Model):
 
     class Meta:
         verbose_name_plural = 'подписки'
+        constraints = [
+            models.UniqueConstraint(
+                name="%(app_label)s_%(class)s_unique_relationships",
+                fields=["user", "author"],),
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_prevent_self_follow",
+                check=~models.Q(user=models.F("author")),),
+        ]
+
+    def __str__(self):
+        return (f'Пользователь {self.user.username}'
+                f'подписан на {self.author.username}')

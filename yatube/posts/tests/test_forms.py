@@ -1,11 +1,11 @@
 import shutil
 import tempfile
+from http import HTTPStatus
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-from http import HTTPStatus
 
 from ..models import Post, Group, User, Comment
 
@@ -104,6 +104,10 @@ class PostsFormTests(TestCase):
         self.assertEqual(Post.objects.all().count(), 1)
 
     def test_unauthorized_user_cannot_create_post(self):
+        """
+        Проверка, что неавторизированный
+        пользователь не может создавать посты
+        """
         Post.objects.all().delete()
         count1 = Post.objects.all().count()
         fields = {'text': 'testtext', 'group': self.group.pk}
@@ -115,6 +119,10 @@ class PostsFormTests(TestCase):
         self.assertEqual(count1, count2)
 
     def test_unauthorized_user_cannot_create_comment(self):
+        """
+        Проверка, что неавторизированный
+        пользователь не может оставлять коментарии
+        """
         Comment.objects.filter(post=self.post).delete()
         count1 = Comment.objects.filter(post=self.post).count()
         fields = {'text': 'testtext'}
@@ -128,6 +136,10 @@ class PostsFormTests(TestCase):
         self.assertEqual(count1, count2)
 
     def test_authorized_user_can_create_comment(self):
+        """
+        Проверка, что авторизированный
+        пользователь может оставлять коментарии
+        """
         Comment.objects.filter(post=self.post).delete()
         count1 = Comment.objects.filter(post=self.post).count()
         fields = {'text': 'testtext'}
@@ -139,3 +151,7 @@ class PostsFormTests(TestCase):
             follow=True)
         count2 = Comment.objects.filter(post=self.post).count()
         self.assertEqual(count1 + 1, count2)
+        comment = Comment.objects.get(post=self.post)
+        self.assertEqual(comment.author, self.user)
+        self.assertEqual(comment.text, 'testtext')
+        self.assertEqual(comment.post, self.post)

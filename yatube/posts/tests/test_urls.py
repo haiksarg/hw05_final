@@ -43,6 +43,16 @@ class PostsURLTests(TestCase):
             ('posts:post_edit',
              (f'{self.post.pk}',),
              f'/posts/{self.post.pk}/edit/'),
+            ('posts:add_comment',
+             (f'{self.post.pk}',),
+             f'/posts/{self.post.pk}/comment/'),
+            ('posts:follow_index', None, '/follow/'),
+            ('posts:profile_follow',
+             (f'{self.user.username}',),
+             f'/profile/{self.user.username}/follow/'),
+            ('posts:profile_unfollow',
+             (f'{self.user.username}',),
+             f'/profile/{self.user.username}/unfollow/'),
         )
         cache.clear()
 
@@ -70,13 +80,21 @@ class PostsURLTests(TestCase):
 
     def test_authorized_client(self):
         """Проверка доступности страниц для авторизованных пользователей."""
+        follows = ['posts:profile_follow', 'posts:profile_unfollow']
         for reverse_name, arguments, _ in self.urls_and_names:
             with self.subTest(reverse_name=reverse_name, arguments=arguments):
-                response = self.authorized_client.get(
-                    reverse(
-                        reverse_name,
-                        args=arguments),
-                    follow=True)
+                if reverse_name in follows:
+                    response = self.authorized_client.get(
+                        reverse(
+                            reverse_name,
+                            args=(self.author.username,)),
+                        follow=True)
+                else:
+                    response = self.authorized_client.get(
+                        reverse(
+                            reverse_name,
+                            args=arguments),
+                        follow=True)
                 if reverse_name == 'posts:post_edit':
                     self.assertRedirects(
                         response,
@@ -122,6 +140,7 @@ class PostsURLTests(TestCase):
             ('posts:post_edit',
              (f'{self.post.pk}',),
              'posts/post_create.html'),
+            ('posts:follow_index', None, 'posts/follow.html'),
         )
         for rev_name, argum, temp in templates_and_names:
             with self.subTest(rev_name=rev_name, argum=argum, temp=temp):

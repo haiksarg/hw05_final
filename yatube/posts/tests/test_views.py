@@ -66,11 +66,12 @@ class PostsViewTests(TestCase):
         """Проверка контекста view-функций, содержащих в нем ПостФорму"""
         view_context_form_reverses = (
             ('posts:post_create', None),
-            ('posts:post_edit', (f'{self.post.pk}',)),
+            ('posts:post_edit', (self.post.pk,)),
         )
         form_fields = (
             ('text', forms.fields.CharField),
-            ('group', forms.models.ModelChoiceField)
+            ('group', forms.models.ModelChoiceField),
+            ('image', forms.fields.ImageField)
         )
         for view_reverse, arguments in view_context_form_reverses:
             with self.subTest(view_name=view_reverse, arguments=arguments):
@@ -111,7 +112,7 @@ class PostsViewTests(TestCase):
         """Проверка контекста view-функции group_posts"""
         response = self.authorized_client.get(reverse(
             'posts:group_list',
-            args=(f'{self.group.slug}',)))
+            args=(self.group.slug,)))
         self.contexter(response)
         self.assertIsInstance(response.context['group'], Group)
 
@@ -119,7 +120,7 @@ class PostsViewTests(TestCase):
         """Проверка контекста view-функции profile"""
         response = self.authorized_client.get(reverse(
             'posts:profile',
-            args=(f'{self.user.username}',)))
+            args=(self.user.username,)))
         self.contexter(response)
         self.assertIsInstance(response.context['author'], User)
 
@@ -131,21 +132,22 @@ class PostsViewTests(TestCase):
             description='Тестовое описание 2')
         response = self.authorized_client.get(reverse(
             'posts:group_list',
-            args=(f'{group_2.slug}',)))
+            args=(group_2.slug,)))
         self.assertEqual(len(response.context['page_obj']), 0)
         response = self.authorized_client.get(reverse(
             'posts:group_list',
-            args=(f'{self.group.slug}',)))
+            args=(self.group.slug,)))
         self.assertEqual(len(response.context['page_obj']), 1)
 
     def test_context_post_detail(self):
         """Проверка контекста view-функции post_detail"""
         response = self.authorized_client.get(reverse(
             'posts:post_detail',
-            args=(f'{self.post.pk}',)))
+            args=(self.post.pk,)))
         self.contexter(response, True)
 
     def test_len_paginator(self):
+        """Проверка пагинации"""
         posts = []
         for number in range(settings.TEST_PAGINATOR):
             posts.append(Post(
@@ -153,51 +155,84 @@ class PostsViewTests(TestCase):
                 text=f'Post {number}',
                 group=self.group))
         Post.objects.bulk_create(posts, batch_size=13)
+        Follow.objects.create(
+            user=self.follower,
+            author=self.user)
         pag_names = (
             ('posts:index', None),
             ('posts:group_list',
-             (f'{self.group.slug}',)),
+             (self.group.slug,)),
             ('posts:profile',
-             (f'{self.user.username}',)))
+             (self.user.username,)),
+            ('posts:follow_index', None),)
         for reverse_name, arguments in pag_names:
             with self.subTest(reverse_name=reverse_name, arguments=arguments):
                 for page, limit in self.pages:
                     with self.subTest(page=page, limit=limit):
-                        response = self.authorized_client.get(reverse(
+                        response = self.authorized_follower.get(reverse(
                             reverse_name,
                             args=arguments) + page)
                         context = response.context.get('page_obj')
                         self.assertEqual(len(context), limit)
 
     def test_cache_index(self):
-        response = self.authorized_client.get(reverse(
-            "posts:index"))
-        count1 = len(response.context.get('page_obj'))
+        """Проверка кеширования данных главной страницы"""
+        response1 = self.authorized_client.get(reverse(
+            'posts:index'))
         Post.objects.all().delete()
-        count2 = len(response.context.get('page_obj'))
-        self.assertEqual(count1, count2)
+        response2 = self.authorized_client.get(reverse(
+            'posts:index'))
+        self.assertEqual(
+            response1.content,
+            response2.content)
+        cache.clear()
+        response3 = self.authorized_client.get(reverse(
+            'posts:index'))
+        self.assertNotEqual(
+            response1.content,
+            response3.content)
 
     def test_following(self):
-        """Проверка работы подписок и отписок"""
+        """Проверка работы подписок"""
         count1 = Follow.objects.count()
         self.authorized_follower.get(
             reverse(
                 'posts:profile_follow',
-                args=(f'{self.user.username}',)),
+                args=(self.user.username,)),
             follow=True)
         count2 = Follow.objects.count()
         self.assertEqual(count1 + 1, count2)
-        response1 = self.authorized_follower.get(reverse('posts:follow_index'))
-        context1 = response1.context.get('page_obj')
-        self.assertEqual(len(context1), 1)
+        follow = Follow.objects.get(
+            user=self.follower,
+            author=self.user)
+        self.assertEqual(follow.user, self.follower)
+        self.assertEqual(follow.author, self.user)
 
+    def test_unfollowing(self):
+        """Проверка работы отписок"""
+        Follow.objects.create(
+            user=self.follower,
+            author=self.user)
+        count1 = Follow.objects.count()
         self.authorized_follower.get(
             reverse(
                 'posts:profile_unfollow',
-                args=(f'{self.user.username}',)),
+                args=(self.user.username,)),
             follow=True)
-        count3 = Follow.objects.count()
-        self.assertEqual(count1, count3)
+        count2 = Follow.objects.count()
+        self.assertEqual(count1 - 1, count2)
+
+    def test_displaying_a_post_on_the_follow_index_page(self):
+        """Проверка отображения поста на странице follow_index"""
+        Follow.objects.create(
+            user=self.follower,
+            author=self.user)
+        response1 = self.authorized_follower.get(reverse('posts:follow_index'))
+        context1 = response1.context.get('page_obj')
+        self.assertEqual(len(context1), 1)
+        Follow.objects.get(
+            user=self.follower,
+            author=self.user).delete()
         response2 = self.authorized_follower.get(reverse('posts:follow_index'))
         context2 = response2.context.get('page_obj')
         self.assertEqual(len(context2), 0)
@@ -208,7 +243,20 @@ class PostsViewTests(TestCase):
         self.authorized_follower.get(
             reverse(
                 'posts:profile_follow',
-                args=(f'{self.follower.username}',)),
+                args=(self.follower.username,)),
+            follow=True)
+        count2 = Follow.objects.count()
+        self.assertEqual(count1, count2)
+
+    def test_duble_follow(self):
+        Follow.objects.create(
+            user=self.follower,
+            author=self.user)
+        count1 = Follow.objects.count()
+        self.authorized_follower.get(
+            reverse(
+                'posts:profile_follow',
+                args=(self.user.username,)),
             follow=True)
         count2 = Follow.objects.count()
         self.assertEqual(count1, count2)

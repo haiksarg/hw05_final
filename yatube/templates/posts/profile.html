@@ -11,13 +11,13 @@
             <li class="list-group-item"><h5>{{ author.get_full_name }}</h5></li>
             <li class="list-group-item"><h6>постов {{ author.posts.all.count }}</h6></li>
             <li class="list-group-item">
-              <h6>подписок {{ followings }}</h6>
-              <h6>подписчиков {{ followers }}</h6>
+              <h6>подписок {{ user.follower.count }}</h6>
+              <h6>подписчиков {{ user.following.count }}</h6>
             </li>
           </ul>
         </div>
         <br>
-        {% if not user == author %}
+        {% if not user == author and user.is_authenticated %}
           {% if following %}
             <a
               class="btn btn-lg btn-secondary"
