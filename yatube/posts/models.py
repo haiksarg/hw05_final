@@ -77,10 +77,10 @@ class Follow(models.Model):
         verbose_name_plural = 'подписки'
         constraints = [
             models.UniqueConstraint(
-                name="%(app_label)s_%(class)s_unique_relationships",
+                name='%(app_label)s_%(class)s_unique_relationships',
                 fields=["user", "author"],),
             models.CheckConstraint(
-                name="%(app_label)s_%(class)s_prevent_self_follow",
+                name='%(app_label)s_%(class)s_prevent_self_follow',
                 check=~models.Q(user=models.F("author")),),
         ]
 

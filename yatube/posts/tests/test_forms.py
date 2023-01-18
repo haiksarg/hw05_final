@@ -153,5 +153,5 @@ class PostsFormTests(TestCase):
         self.assertEqual(count1 + 1, count2)
         comment = Comment.objects.get(post=self.post)
         self.assertEqual(comment.author, self.user)
-        self.assertEqual(comment.text, 'testtext')
+        self.assertEqual(comment.text, fields['text'])
         self.assertEqual(comment.post, self.post)
