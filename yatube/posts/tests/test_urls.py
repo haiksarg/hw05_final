@@ -11,6 +11,7 @@ class PostsURLTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='testuser')
+        cls.followon = User.objects.create_user(username='followon')
         cls.author = User.objects.create_user(username='testauthor')
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -26,6 +27,8 @@ class PostsURLTests(TestCase):
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.authorized_followon = Client()
+        self.authorized_followon.force_login(self.followon)
         self.authorized_author = Client()
         self.authorized_author.force_login(self.author)
         self.urls_and_names = (
@@ -48,11 +51,11 @@ class PostsURLTests(TestCase):
              f'/posts/{self.post.pk}/comment/'),
             ('posts:follow_index', None, '/follow/'),
             ('posts:profile_follow',
-             (self.user.username,),
-             f'/profile/{self.user.username}/follow/'),
+             (self.followon.username,),
+             f'/profile/{self.followon.username}/follow/'),
             ('posts:profile_unfollow',
-             (self.user.username,),
-             f'/profile/{self.user.username}/unfollow/'),
+             (self.followon.username,),
+             f'/profile/{self.followon.username}/unfollow/'),
         )
         cache.clear()
 
@@ -74,6 +77,8 @@ class PostsURLTests(TestCase):
             'posts:profile_follow': 'posts:profile'}
         for reverse_name, arguments, _ in self.urls_and_names:
             with self.subTest(reverse_name=reverse_name, arguments=arguments):
+                if reverse_name == 'posts:profile_unfollow':
+                    Follow.objects.all().delete()
                 response = self.authorized_author.get(
                     reverse(
                         reverse_name,
@@ -85,38 +90,35 @@ class PostsURLTests(TestCase):
                         reverse(
                             redirects[reverse_name],
                             args=arguments))
+                elif reverse_name == 'posts:profile_unfollow':
+                    self.assertEqual(
+                        response.status_code,
+                        HTTPStatus.NOT_FOUND)
                 else:
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_authorized_client(self):
         """Проверка доступности страниц для авторизованных пользователей."""
-        follows = ['posts:profile_follow', 'posts:profile_unfollow']
         redirects = ['posts:add_comment', 'posts:post_edit']
         for reverse_name, arguments, _ in self.urls_and_names:
             with self.subTest(reverse_name=reverse_name, arguments=arguments):
-                if reverse_name in follows:
-                    response = self.authorized_client.get(
-                        reverse(
-                            reverse_name,
-                            args=(self.author.username,)),
-                        follow=True)
-                    self.assertRedirects(
-                        response,
-                        reverse(
-                            'posts:profile',
-                            args=(self.author.username,)))
-                else:
-                    response = self.authorized_client.get(
-                        reverse(
-                            reverse_name,
-                            args=arguments),
-                        follow=True)
+                if reverse_name == 'posts:profile_unfollow':
+                    Follow.objects.all().delete()
+                response = self.authorized_client.get(
+                    reverse(
+                        reverse_name,
+                        args=arguments),
+                    follow=True)
                 if reverse_name in redirects:
                     self.assertRedirects(
                         response,
                         reverse(
                             'posts:post_detail',
                             args=(self.post.pk,)))
+                elif reverse_name == 'posts:profile_unfollow':
+                    self.assertEqual(
+                        response.status_code,
+                        HTTPStatus.NOT_FOUND)
                 else:
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
@@ -175,14 +177,6 @@ class PostsURLTests(TestCase):
 
     def test_error(self):
         """Проверка 404."""
-        Follow.objects.all().delete()
-        erros = [
-            '/unexisting-page/',
-            reverse(
-                'posts:profile_unfollow',
-                args=(self.user.username,))]
-        for reverse_name in erros:
-            with self.subTest(reverse_name=reverse_name):
-                response = self.client.get('/unexisting-page/')
-                self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-                self.assertTemplateUsed(response, 'core/eror.html')
+        response = self.client.get('/unexisting-page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        self.assertTemplateUsed(response, 'core/eror.html')
