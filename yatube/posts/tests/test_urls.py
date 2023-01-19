@@ -99,26 +99,24 @@ class PostsURLTests(TestCase):
 
     def test_authorized_client(self):
         """Проверка доступности страниц для авторизованных пользователей."""
-        redirects = ['posts:add_comment', 'posts:post_edit']
+        redirects = {
+            'posts:add_comment': 'posts:post_detail',
+            'posts:post_edit': 'posts:post_detail',
+            'posts:profile_follow': 'posts:profile',
+            'posts:profile_unfollow': 'posts:profile'}
         for reverse_name, arguments, _ in self.urls_and_names:
             with self.subTest(reverse_name=reverse_name, arguments=arguments):
-                if reverse_name == 'posts:profile_unfollow':
-                    Follow.objects.all().delete()
                 response = self.authorized_client.get(
                     reverse(
                         reverse_name,
                         args=arguments),
                     follow=True)
-                if reverse_name in redirects:
+                if reverse_name in redirects.keys():
                     self.assertRedirects(
                         response,
                         reverse(
-                            'posts:post_detail',
-                            args=(self.post.pk,)))
-                elif reverse_name == 'posts:profile_unfollow':
-                    self.assertEqual(
-                        response.status_code,
-                        HTTPStatus.NOT_FOUND)
+                            redirects[reverse_name],
+                            args=arguments))
                 else:
                     self.assertEqual(response.status_code, HTTPStatus.OK)
 
