@@ -13,6 +13,7 @@ class PostModelTest(TestCase):
             title='Тестовая группа',
             slug='Тестовый слаг',
             description='Тестовое описание',
+            author=cls.user,
         )
         cls.post = Post.objects.create(
             author=cls.user,

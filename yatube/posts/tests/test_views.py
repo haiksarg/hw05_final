@@ -25,6 +25,7 @@ class PostsViewTests(TestCase):
             title='Тестовая группа',
             slug='testslug',
             description='Тестовое описание',
+            author=cls.user,
         )
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -129,6 +130,7 @@ class PostsViewTests(TestCase):
         group_2 = Group.objects.create(
             title='Тестовая группа 2',
             slug='testslugtwo',
+            author=self.user,
             description='Тестовое описание 2')
         response = self.authorized_client.get(reverse(
             'posts:group_list',
@@ -260,3 +262,13 @@ class PostsViewTests(TestCase):
             follow=True)
         count2 = Follow.objects.count()
         self.assertEqual(count1, count2)
+
+    def test_post_delete(self):
+        """Проверка удаления постов"""
+        count1 = Post.objects.count()
+        self.authorized_client.get(
+            reverse(
+                'posts:post_delete',
+                args=(self.post.pk,)))
+        count2 = Post.objects.count()
+        self.assertEqual(count1 - 1, count2)

@@ -17,21 +17,26 @@
           </ul>
         </div>
         <br>
-        {% if not user == author and user.is_authenticated %}
-          {% if following %}
-            <a
-              class="btn btn-lg btn-secondary"
-              href="{% url 'posts:profile_unfollow' author.username %}" role="button"
-            >
-              Отписаться
-            </a>
+        {% if user.is_authenticated%}
+          {% if not user == author %}
+            {% if following %}
+              <a
+                class="btn btn-lg btn-secondary"
+                href="{% url 'posts:profile_unfollow' author.username %}" role="button"
+              >
+                Отписаться
+              </a>
+            {% else %}
+              <a
+                class="btn btn-lg btn-secondary"
+                href="{% url 'posts:profile_follow' author.username %}" role="button"
+              >
+                Подписаться
+              </a>
+            {% endif %}
           {% else %}
-            <a
-              class="btn btn-lg btn-secondary"
-              href="{% url 'posts:profile_follow' author.username %}" role="button"
-            >
-              Подписаться
-            </a>
+            <a class="btn btn-secondary" 
+            href="{% url 'users:password_change' %}" role="button">Изменить пароль</a>
           {% endif %}
         {% endif %}
       </aside>

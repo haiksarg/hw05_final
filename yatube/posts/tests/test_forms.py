@@ -23,11 +23,13 @@ class PostsFormTests(TestCase):
             title='Тестовая группа',
             slug='testslug',
             description='Тестовое описание',
+            author=cls.user,
         )
         cls.group_2 = Group.objects.create(
             title='Тестовая группа2',
             slug='testslug2',
             description='Тестовое описание2',
+            author=cls.user,
         )
         cls.post = Post.objects.create(
             author=cls.user,

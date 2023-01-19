@@ -17,6 +17,7 @@ class PostsURLTests(TestCase):
             title='Тестовая группа',
             slug='testslug',
             description='Тестовое описание',
+            author=cls.author,
         )
         cls.post = Post.objects.create(
             author=cls.author,

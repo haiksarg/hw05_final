@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}
+  Группы
+{% endblock %}
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-md-6 p-5">
+      <h1> Группы </h1>
+      <br>
+      {% include 'posts/includes/switcher.html' with groups=True %}
+      <br>
+      <a type="button" href="{% url 'posts:group_create' %}" class="btn btn-secondary">Создать группу</a>
+      <br><br>
+      {% for group in page_obj %}
+        <div class="card">
+          <h5 class="card-header">
+            <div> 
+              <a href="{% url 'posts:group_list' group.slug %}" class="blog-post-meta link-dark">
+                {{ group.title }} 
+              </a>
+            </div>
+          </h5>
+          <div class="card-body">
+            {{ group.description|linebreaks }}
+          </div>
+        </div>
+        {% if not forloop.last %}<hr>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% include 'posts/includes/paginator.html' %}
+{% endblock %}

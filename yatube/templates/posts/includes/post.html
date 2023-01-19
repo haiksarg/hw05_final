@@ -1,18 +1,30 @@
 {% load thumbnail %}
 <div class="card">
   <h5 class="card-header">
-    {% if not group_list %}
-      {% if post.group %} 
-        <a href="{% url 'posts:group_list' post.group.slug %}" class="blog-post-meta link-dark">
-          {{ post.group.title }} 
-        </a> |
+    <div>
+      {% if not group_list %}
+        {% if post.group %} 
+          <a href="{% url 'posts:group_list' post.group.slug %}" class="blog-post-meta link-dark">
+            {{ post.group.title }} 
+          </a> |
+        {% endif %}
+      {% endif %}
+      <a {% if not profile %}href="{% url 'posts:profile' post.author.username %}{% endif %}" class="blog-post-meta link-dark">
+        {{ post.author.get_full_name }}
+      </a>
+    </div>
+    {% if user == post.author %}
+      {% if profile or post_detail %}
+        <div class="drop">
+          <button class="nav-btn">&#8943;</button>
+          <div class="nav-list nav-tabs">
+            <h6><a class="nav-link" href="{% url 'posts:post_edit' post.id %}" style="color:black">Редактировать</a></h6>
+            <h6><a class="nav-link" href="{% url 'posts:post_delete' post.id %}" style="color:black">Удалить</a></h6>
+          </div>
+        </div>
       {% endif %}
     {% endif %}
-      Автор: 
-    <a {% if not profile %}href="{% url 'posts:profile' post.author.username %}{% endif %}" class="blog-post-meta link-dark">
-      {{ post.author.get_full_name }}
-    </a>
-  </h5>
+    </h5>
   <div class="card-body">
     <h6 class="card-subtitle">
       {{ post.pub_date|date:"j M Y G:i" }}
@@ -21,13 +33,7 @@
       <img class="card-img my-2" src="{{ im.url }}">
     {% endthumbnail %}
     {{ post.text|linebreaks }}
-    {% if post_detail %}
-      {% if user == post.author %} 
-        <a type="button" href="{% url 'posts:post_edit' post.id %}" class="btn btn-secondary btn-sm">
-          Редактировать
-        </a>
-      {% endif %}
-    {% else %}
+    {% if not post_detail %}
       <a type="button" href="{% url 'posts:post_detail' post.id %}" class="btn btn-secondary btn-sm">Открыть</a>
     {% endif %}
   </div>

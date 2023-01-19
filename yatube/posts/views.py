@@ -1,8 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 
-from .forms import PostForm, CommentForm
-from .models import Group, Post, User, Follow
+from .forms import PostForm, CommentForm, GroupForm
+from .models import Group, Post, User, Follow, Comment
 from .utils import paging
 
 
@@ -15,6 +15,15 @@ def index(request):
     return render(request, 'posts/index.html', context)
 
 
+def group_index(request):
+    groups = Group.objects.all()
+    page_obj = paging(request, groups)
+    context = {
+        'page_obj': page_obj,
+    }
+    return render(request, 'posts/group_index.html', context)
+
+
 def group_posts(request, group_list):
     group = get_object_or_404(Group, slug=group_list)
     posts = group.posts.select_related('author').all()
@@ -24,6 +33,17 @@ def group_posts(request, group_list):
         'page_obj': page_obj,
     }
     return render(request, 'posts/group_list.html', context)
+
+
+@login_required
+def group_create(request):
+    form = GroupForm(request.POST or None)
+    if not form.is_valid():
+        return render(request, 'posts/group_create.html', {'form': form})
+    new_group = form.save(commit=False)
+    new_group.author = request.user
+    new_group.save()
+    return redirect('posts:group_index')
 
 
 def profile(request, username):
@@ -81,6 +101,14 @@ def post_edit(request, post_id):
 
 
 @login_required
+def post_delete(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.user == post.author:
+        post.delete()
+    return redirect('posts:profile', request.user.username)
+
+
+@login_required
 def add_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     form = CommentForm(request.POST or None)
@@ -90,6 +118,14 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    if request.user == comment.author:
+        comment.delete()
+    return redirect('posts:post_detail', comment.post.pk)
 
 
 @login_required

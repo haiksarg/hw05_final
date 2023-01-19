@@ -16,16 +16,20 @@
 {% endif %}
 
 {% for comment in comments %}
-  <div class="media mb-4">
-    <div class="media-body">
+  <div>
+    <div class>
       <h5 class="mt-0">
         <a class="blog-post-meta link-dark" href="{% url 'posts:profile' comment.author.username %}">
           {{ comment.author.username }}
         </a>
       </h5>
-      <p>
         {{ comment.text|linebreaks }}
-      </p>
     </div>
+    {% if user == comment.author %}
+      <a class="blog-post-meta link-dark" href="{% url 'posts:post_detail' post.id %}">
+        удалить
+      </a>
+    {% endif %}
   </div>
+  {% if not forloop.last %}<hr>{% endif %}
 {% endfor %}

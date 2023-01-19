@@ -34,10 +34,16 @@ class Group(models.Model):
         blank=True,
         null=False,
         unique=True,
+        help_text='Введите ссылкy группы',
     )
     description = models.TextField(
         'описание группы',
         help_text='Введите описание группы'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='автор',
     )
 
     class Meta:
