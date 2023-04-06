@@ -1,0 +1,33 @@
+.navbar {
+    display: flex;
+    background-color: lightgrey;
+}
+
+.nav-btn {
+    display: none;
+}
+
+.nav-list {
+    display: flex;
+}
+
+@media (max-width:  1000px) {
+    .nav-btn {
+    font-size: 2em;
+    padding-inline: 10px;
+    border: none;
+    background-color: lightgrey;
+    display: block;
+    cursor: pointer;
+    }
+
+    .nav-list {
+        display: none;
+    }
+
+    .drop:hover .nav-list {
+        display: block;
+        position: absolute;
+        background-color: lightgrey;
+    }
+}

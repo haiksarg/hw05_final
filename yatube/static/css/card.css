@@ -1,0 +1,28 @@
+.card a {
+    text-decoration: none;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.card-header .drop:hover .nav-list {
+    display: block;
+    position: absolute;
+    background-color: rgb(247, 247, 247);
+}
+
+.card-header .nav-btn {
+    font-size: 1.2em;
+    padding-inline: 4px;
+    padding-bottom: 3px;
+    border: none;
+    background-color: rgb(247, 247, 247);
+    display: block;
+    cursor: pointer;
+}
+
+.card-header .nav-list {
+    display: none;
+}
