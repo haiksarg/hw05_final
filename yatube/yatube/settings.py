@@ -1,11 +1,15 @@
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 SECRET_KEY = '0!f2fpep!+c69p0%t_sfb(10%4@*j@-(s)rkh)*lqbin=h+1dn'
 
-DEBUG = True
+DEBUG = False
 
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
@@ -14,8 +18,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '[::1]',
     'testserver',
-    'www.haiksarg.pythonanywhere.com',
-    'haiksarg.pythonanywhere.com',
+    'haiksarg-yatube.servebeer.com',
+    '158.160.31.18',
 ]
 
 INSTALLED_APPS = [
@@ -77,8 +81,12 @@ WSGI_APPLICATION = 'yatube.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT')
     }
 }
 
@@ -114,7 +122,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 CACHES = {
     'default': {
